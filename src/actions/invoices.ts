@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { generateInvoiceNumber } from "@/lib/invoice-number";
-import type { InvoiceStatus } from "@/generated/prisma/client";
+import type { InvoiceStatus } from "@prisma/client";
 
 export type InvoiceItemInput = {
   name: string;

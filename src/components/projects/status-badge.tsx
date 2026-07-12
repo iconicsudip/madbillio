@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { ProjectStatus } from "@/generated/prisma/client";
+import type { ProjectStatus } from "@prisma/client";
 
 const STYLES: Record<ProjectStatus, string> = {
   ACTIVE: "bg-success/10 text-success",

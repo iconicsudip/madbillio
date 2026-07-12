@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { InvoiceStatus } from "@/generated/prisma/client";
+import type { InvoiceStatus } from "@prisma/client";
 
 export function InvoiceActions({
   id,

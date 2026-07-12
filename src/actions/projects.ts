@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import type { ProjectStatus } from "@/generated/prisma/client";
+import type { ProjectStatus } from "@prisma/client";
 
 export type ProjectInput = {
   name: string;

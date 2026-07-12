@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { InvoiceStatus } from "@/generated/prisma/client";
+import type { InvoiceStatus } from "@prisma/client";
 
 const STYLES: Record<InvoiceStatus, string> = {
   DRAFT: "bg-muted text-muted-foreground",

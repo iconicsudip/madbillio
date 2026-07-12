@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import type { PaymentDetailType } from "@/generated/prisma/client";
+import type { PaymentDetailType } from "@prisma/client";
 
 export type PaymentDetailInput = {
   label: string;

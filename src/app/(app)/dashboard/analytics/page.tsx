@@ -7,7 +7,7 @@ import { TopClientsChart } from "@/components/analytics/top-clients-chart";
 import { InvoiceStatusBadge } from "@/components/invoices/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Clock, Receipt, Users } from "lucide-react";
-import type { InvoiceStatus } from "@/generated/prisma/client";
+import type { InvoiceStatus } from "@prisma/client";
 
 const STATUS_ORDER: InvoiceStatus[] = [
   "DRAFT",
