@@ -74,6 +74,7 @@ export default async function ProjectDetailPage({
         </div>
         <div className="flex gap-2">
           <ProjectFormDialog
+            key={project.updatedAt.toISOString()}
             clients={clients}
             project={{
               id: project.id,

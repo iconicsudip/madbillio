@@ -91,7 +91,7 @@ export function ProjectFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        nativeButton={trigger ? undefined : true}
+        nativeButton
         render={
           trigger ?? (
             <Button>

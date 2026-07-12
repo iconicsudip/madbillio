@@ -162,6 +162,7 @@ export default async function PnlPage() {
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
                           <ExpenseFormDialog
+                            key={e.updatedAt.toISOString()}
                             projects={projects.map((p) => ({ id: p.id, name: p.name }))}
                             expense={{
                               id: e.id,

@@ -186,27 +186,61 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
           Payment Info
         </p>
         {data.paymentDetails && data.paymentDetails.length > 0 ? (
-          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {data.paymentDetails.map((pd) => (
-              <div key={pd.id} className="flex items-start gap-2">
-                {pd.imageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
+          <div className="mt-2 space-y-4">
+            {data.paymentDetails
+              .filter((pd) => pd.type === "QR_CODE" && pd.imageUrl)
+              .map((pd) => (
+                <div
+                  key={pd.id}
+                  className="flex flex-wrap items-center gap-4 rounded-xl bg-secondary/60 p-4"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={pd.imageUrl}
+                    src={pd.imageUrl ?? undefined}
                     alt={pd.label}
-                    className="size-12 shrink-0 rounded-md border object-cover"
+                    className="size-32 shrink-0 rounded-lg border bg-white object-contain p-1.5 sm:size-40"
                   />
-                )}
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">
-                    {pd.label} · {PAYMENT_TYPE_LABELS[pd.type] ?? pd.type}
-                  </p>
-                  <p className="break-words font-medium">
-                    {pd.details || "—"}
-                  </p>
+                  <div className="min-w-0">
+                    <p className="font-medium">{pd.label}</p>
+                    {pd.details && (
+                      <p className="break-words text-muted-foreground">
+                        {pd.details}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Scan to pay{" "}
+                      <span className="font-semibold text-foreground">
+                        {formatCurrency(total, data.currency)}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {data.paymentDetails
+                .filter((pd) => !(pd.type === "QR_CODE" && pd.imageUrl))
+                .map((pd) => (
+                  <div key={pd.id} className="flex items-start gap-2">
+                    {pd.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={pd.imageUrl}
+                        alt={pd.label}
+                        className="size-12 shrink-0 rounded-md border object-cover"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">
+                        {pd.label} · {PAYMENT_TYPE_LABELS[pd.type] ?? pd.type}
+                      </p>
+                      <p className="break-words font-medium">
+                        {pd.details || "—"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         ) : (
           <div className="mt-1.5 grid grid-cols-3 gap-3">

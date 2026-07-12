@@ -92,6 +92,7 @@ export default async function ClientsPage() {
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
                           <ClientFormDialog
+                            key={client.updatedAt.toISOString()}
                             client={client}
                             trigger={
                               <button

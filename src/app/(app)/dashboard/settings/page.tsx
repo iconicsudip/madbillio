@@ -29,7 +29,10 @@ export default async function SettingsPage() {
           These details appear on every invoice you generate.
         </p>
       </div>
-      <BusinessProfileForm profile={profile} />
+      <BusinessProfileForm
+        key={profile.updatedAt.toISOString()}
+        profile={profile}
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -75,6 +78,7 @@ export default async function SettingsPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <PaymentDetailFormDialog
+                      key={detail.updatedAt.toISOString()}
                       detail={detail}
                       trigger={
                         <button

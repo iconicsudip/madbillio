@@ -104,6 +104,7 @@ export default async function ProjectsPage() {
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
                           <ProjectFormDialog
+                            key={project.updatedAt.toISOString()}
                             clients={clients}
                             project={project}
                             trigger={
