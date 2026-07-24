@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, type ReactElement } from "react";
-import { Sparkles, Mail, Copy, Check, Bot, Loader2 } from "lucide-react";
+import { Sparkles, Mail, Copy, Check, Bot, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { aiGeneratePaymentReminder } from "@/actions/ai";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export function GrokReminderModal({
 }: GrokReminderModalProps) {
   const [open, setOpen] = useState(false);
   const [tone, setTone] = useState<"friendly" | "professional" | "firm" | "urgent">("professional");
+  const [targetEmail, setTargetEmail] = useState(clientEmail || "");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [copied, setCopied] = useState(false);
@@ -158,6 +159,20 @@ export function GrokReminderModal({
           ) : (
             <div className="space-y-3">
               <div className="space-y-1">
+                <Label htmlFor="rem-to" className="text-xs font-semibold">
+                  Recipient Email (To)
+                </Label>
+                <Input
+                  id="rem-to"
+                  type="email"
+                  placeholder="client@example.com"
+                  value={targetEmail}
+                  onChange={(e) => setTargetEmail(e.target.value)}
+                  className="text-xs h-9"
+                />
+              </div>
+
+              <div className="space-y-1">
                 <Label htmlFor="rem-subject" className="text-xs font-semibold">
                   Email Subject
                 </Label>
@@ -185,29 +200,41 @@ export function GrokReminderModal({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          {clientEmail && (
-            <a
-              href={`mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mr-auto"
+        <DialogFooter className="flex flex-wrap items-center justify-between gap-2 sm:gap-2">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCopy}
+              disabled={pending || !body}
+              size="sm"
+              className="gap-1.5 text-xs rounded-xl cursor-pointer"
             >
-              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs">
-                <Mail className="h-3.5 w-3.5" /> Open in Email App
-              </Button>
-            </a>
-          )}
-          <Button
-            type="button"
-            onClick={handleCopy}
-            disabled={pending || !body}
-            size="sm"
-            className="gap-1.5 text-xs"
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? "Copied!" : "Copy Email"}
+            </Button>
+          </div>
+
+          <a
+            href={`mailto:${encodeURIComponent(targetEmail || "")}?subject=${encodeURIComponent(
+              subject
+            )}&body=${encodeURIComponent(body)}`}
+            onClick={() => {
+              toast.success(
+                `Opening email app to send message to ${targetEmail || clientName}...`
+              );
+            }}
+            className="inline-flex"
           >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? "Copied!" : "Copy Email"}
-          </Button>
+            <Button
+              type="button"
+              disabled={pending || !body}
+              size="sm"
+              className="gap-1.5 text-xs rounded-xl cursor-pointer bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white border-0 shadow-xs"
+            >
+              <Send className="h-3.5 w-3.5" /> Send Email
+            </Button>
+          </a>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -4,6 +4,7 @@ import { listInvoices } from "@/actions/invoices";
 import { formatCurrency, formatDate, initials } from "@/lib/format";
 import { InvoiceStatusBadge } from "@/components/invoices/status-badge";
 import { DeleteInvoiceButton } from "@/components/invoices/delete-invoice-button";
+import { PrintInvoiceButton } from "@/components/invoices/print-invoice-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -101,10 +102,12 @@ export default async function InvoicesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
+                        <PrintInvoiceButton invoiceId={invoice.id} />
                         <Button
                           render={<Link href={`/dashboard/invoices/${invoice.id}/edit`} />}
                           variant="ghost"
                           size="icon-sm"
+                          title="Edit Invoice"
                         >
                           <Pencil className="size-4" />
                         </Button>
