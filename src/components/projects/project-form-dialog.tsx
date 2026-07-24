@@ -72,13 +72,6 @@ export function ProjectFormDialog({
     })) ?? []
   );
 
-  function handleAddEmptyDocument() {
-    setDocuments((prev) => [
-      ...prev,
-      { name: "New Document", url: "", fileType: "LINK" },
-    ]);
-  }
-
   function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -272,7 +265,7 @@ export function ProjectFormDialog({
               <div>
                 <Label className="text-sm font-semibold">Project Documents</Label>
                 <p className="text-xs text-muted-foreground">
-                  Attach contracts, SOWs, or document links
+                  Attach contracts, SOWs, and project files
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
@@ -282,77 +275,53 @@ export function ProjectFormDialog({
                   onChange={handleFileUpload}
                   multiple
                   className="hidden"
-                  accept="image/*,application/pdf,text/*,.doc,.docx"
+                  accept="image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-8 gap-1 text-xs"
+                  className="h-8 gap-1.5 text-xs rounded-xl border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
                 >
                   <Upload className="h-3.5 w-3.5" /> Upload File
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleAddEmptyDocument}
-                  className="h-8 gap-1 text-xs text-primary"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add URL
                 </Button>
               </div>
             </div>
 
             {documents.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-                No documents attached yet. Click &quot;Upload File&quot; or &quot;Add URL&quot; to add project files.
+              <div className="rounded-2xl border border-dashed p-4 text-center text-xs text-muted-foreground">
+                No documents attached yet. Click &quot;Upload File&quot; to add project files.
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
                 {documents.map((doc, index) => (
                   <div
                     key={index}
-                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-md border p-2 bg-muted/20"
+                    className="flex items-center justify-between gap-2 rounded-xl border p-2.5 bg-muted/20"
                   >
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
                       <Input
                         placeholder="Document Name (e.g. Contract v1)"
                         value={doc.name}
                         onChange={(e) =>
                           handleDocumentChange(index, "name", e.target.value)
                         }
-                        className="h-8 text-xs bg-background"
+                        className="h-8 text-xs bg-background flex-1"
                       />
-                      <div className="flex items-center gap-1">
-                        <Input
-                          placeholder="Document URL or data"
-                          value={doc.url}
-                          onChange={(e) =>
-                            handleDocumentChange(index, "url", e.target.value)
-                          }
-                          className="h-8 text-xs bg-background flex-1"
-                        />
-                      </div>
+                      <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground shrink-0 uppercase">
+                        {doc.fileType || "File"}
+                      </span>
                     </div>
-                    <div className="flex items-center justify-end gap-1 shrink-0">
+
+                    <div className="flex items-center gap-1 shrink-0">
                       {doc.url ? (
                         <DocumentViewerModal
                           documentName={doc.name || "Untitled Document"}
                           documentUrl={doc.url}
                         />
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          disabled
-                          className="h-8 w-8 text-muted-foreground opacity-50"
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                      )}
+                      ) : null}
                       <Button
                         type="button"
                         variant="ghost"
