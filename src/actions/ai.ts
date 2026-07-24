@@ -774,3 +774,95 @@ export async function aiExecuteMultiStepCreation(input: ParsedEntities) {
     };
   });
 }
+
+/**
+ * Generates formatted HTML invoice notes and terms based on a comment prompt
+ */
+export async function aiGenerateInvoiceNotes(
+  prompt: string,
+  context?: { clientName?: string; dueDate?: string; currency?: string }
+): Promise<string> {
+  const userId = await requireUserId();
+  const creditCheck = await checkAndDeductAiCredit(userId);
+  if (!creditCheck.allowed) {
+    throw new Error(creditCheck.message || "Daily AI credit limit reached.");
+  }
+
+  const userComment =
+    prompt.trim() ||
+    "Thank you for your business. Please make payment within 2 days. Contact us with any questions regarding this invoice or payment details.";
+
+  const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.OPEN_ROUTER_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+
+  const systemPrompt = `You are an AI Invoice Terms & Notes Generator for Madbillio.
+Given a user comment or payment instruction, generate clean, professional HTML formatted invoice notes.
+Requirements:
+- Return ONLY valid HTML markup using <p>, <strong>, <ul>, and <li> tags without markdown code blocks (\`\`\`html).
+- Expand key terms professionally (payment timeframe, support contact, late payment terms).
+- Keep it concise, polite, and well-structured for direct display in a rich text editor.`;
+
+  const userPrompt = `User comment: "${userComment}"
+Client name: ${context?.clientName || "Valued Client"}
+Due Date: ${context?.dueDate || "As specified"}`;
+
+  if (openrouterKey) {
+    try {
+      const model = process.env.OPENROUTER_MODEL || "nvidia/nemotron-3-ultra-550b-a55b:free";
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openrouterKey}`,
+          "HTTP-Referer": "https://madbillio.com",
+          "X-Title": "Madbillio Billing",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.4,
+          max_tokens: 500,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          return content.replace(/```html|```/gi, "").trim();
+        }
+      }
+    } catch (err) {
+      console.warn("OpenRouter aiGenerateInvoiceNotes error:", err);
+    }
+  }
+
+  if (groqKey) {
+    try {
+      const groq = new Groq({ apiKey: groqKey });
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.4,
+        max_tokens: 500,
+      });
+
+      const content = chatCompletion.choices[0]?.message?.content;
+      if (content) {
+        return content.replace(/```html|```/gi, "").trim();
+      }
+    } catch (err) {
+      console.error("Groq aiGenerateInvoiceNotes error:", err);
+    }
+  }
+
+  // High-quality fallback
+  return `<p>Thank you for your business. ${userComment}</p><p>Please contact us with any questions regarding this invoice or payment details.</p><ul><li><strong>Payment Terms:</strong> Payment due within specified timeframe.</li><li><strong>Support:</strong> Reach out to accounting for any billing inquiries.</li></ul>`;
+}
+

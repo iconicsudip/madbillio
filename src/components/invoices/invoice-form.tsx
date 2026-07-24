@@ -2,15 +2,24 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { createInvoice, updateInvoice, setInvoiceStatus } from "@/actions/invoices";
+import { aiGenerateInvoiceNotes } from "@/actions/ai";
 import { formatDateInput, CURRENCIES } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -121,6 +130,30 @@ export function InvoiceForm({
   const [notes, setNotes] = useState(
     initialInvoice?.notes ?? profile.invoiceNotes
   );
+
+  const [aiNotesModalOpen, setAiNotesModalOpen] = useState(false);
+  const [aiPromptInput, setAiPromptInput] = useState(
+    "Thank you for your business. Please make payment within 2 days. Contact us with any questions regarding this invoice or payment details."
+  );
+  const [generatingNotes, startGeneratingNotes] = useTransition();
+
+  function handleGenerateAiNotes() {
+    startGeneratingNotes(async () => {
+      try {
+        toast.loading("Generating professional AI invoice notes...", { id: "ai-notes" });
+        const generatedHtml = await aiGenerateInvoiceNotes(aiPromptInput, {
+          clientName: selectedClient?.name,
+          dueDate,
+          currency,
+        });
+        setNotes(generatedHtml);
+        toast.success("AI Notes generated successfully!", { id: "ai-notes" });
+        setAiNotesModalOpen(false);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to generate AI notes.", { id: "ai-notes" });
+      }
+    });
+  }
   const [items, setItems] = useState<Item[]>(
     initialInvoice?.items.length
       ? initialInvoice.items
@@ -517,7 +550,53 @@ export function InvoiceForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Notes / Terms</Label>
+              <div className="flex items-center justify-between">
+                <Label>Notes / Terms</Label>
+                <Dialog open={aiNotesModalOpen} onOpenChange={setAiNotesModalOpen}>
+                  <DialogTrigger
+                    nativeButton
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs gap-1.5 rounded-lg border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer font-semibold"
+                      >
+                        <Sparkles className="size-3.5 text-amber-500 animate-pulse" /> Generate AI Notes
+                      </Button>
+                    }
+                  />
+                  <DialogContent className="sm:max-w-md rounded-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Sparkles className="size-4 text-amber-500" /> AI Notes & Terms Generator
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-2">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Payment Comment or Terms Prompt</Label>
+                        <textarea
+                          rows={4}
+                          value={aiPromptInput}
+                          onChange={(e) => setAiPromptInput(e.target.value)}
+                          placeholder="e.g. Thank you for your business. Please make payment within 2 days..."
+                          className="w-full rounded-xl border border-input bg-background p-3 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/30 leading-relaxed"
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          onClick={handleGenerateAiNotes}
+                          disabled={generatingNotes || !aiPromptInput.trim()}
+                          className="rounded-xl text-xs gap-1.5 cursor-pointer bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white border-0 shadow-xs"
+                        >
+                          <Sparkles className="size-3.5" />
+                          {generatingNotes ? "Generating..." : "Generate AI Notes"}
+                        </Button>
+                      </DialogFooter>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
               <RichTextEditor
                 value={notes}
                 onChange={setNotes}
