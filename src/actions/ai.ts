@@ -8,6 +8,7 @@ import { uploadFileToFolder } from "@/actions/folders";
 import { uploadToS3 } from "@/lib/s3";
 import { safePrismaQuery } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
+import { getDashboardStats, getAnalyticsData } from "@/lib/stats";
 import { Groq } from "groq-sdk";
 import { revalidatePath } from "next/cache";
 
@@ -865,4 +866,134 @@ Due Date: ${context?.dueDate || "As specified"}`;
   // High-quality fallback
   return `<p>Thank you for your business. ${userComment}</p><p>Please contact us with any questions regarding this invoice or payment details.</p><ul><li><strong>Payment Terms:</strong> Payment due within specified timeframe.</li><li><strong>Support:</strong> Reach out to accounting for any billing inquiries.</li></ul>`;
 }
+
+export interface AIAnalyticsInsightsPayload {
+  executiveSummary: string;
+  projectedNextMonthRevenue: number;
+  dsoDays: number;
+  dsoRating: "EXCELLENT" | "GOOD" | "ATTENTION_NEEDED";
+  clientConcentrationRisk: string;
+  recommendations: string[];
+}
+
+export async function getAiAnalyticsInsights(): Promise<AIAnalyticsInsightsPayload> {
+  const userId = await requireUserId();
+  const creditCheck = await checkAndDeductAiCredit(userId);
+  if (!creditCheck.allowed) {
+    throw new Error(creditCheck.message || "Daily AI credit limit reached.");
+  }
+
+  // Fetch stats for AI analysis
+  const [stats, analytics] = await Promise.all([
+    getDashboardStats(userId),
+    getAnalyticsData(userId, 6),
+  ]);
+
+  const totalRev = stats.totalRevenue || 0;
+  const outstanding = stats.outstanding || 0;
+  const overdueCount = stats.overdueCount || 0;
+  const activeProjects = stats.activeProjects || 0;
+
+  // Revenue projection calculation
+  const avgMonthlyRev = totalRev > 0 ? totalRev / 6 : 50000;
+  const projectedRev = Math.round(avgMonthlyRev * 1.15 + activeProjects * 10000);
+  const dsoDays = Math.round((outstanding / Math.max(totalRev, 1)) * 90);
+
+  const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.OPEN_ROUTER_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+
+  const systemPrompt = `You are Madko AI Financial Advisor inside Madbillio.
+Analyze the user's business metrics and return ONLY a valid JSON object matching this schema without markdown code blocks:
+
+{
+  "executiveSummary": "string (2-3 concise sentences summarizing overall financial health and collection performance)",
+  "clientConcentrationRisk": "string (1 sentence assessing client diversity and risk)",
+  "recommendations": ["string (actionable advice 1)", "string (actionable advice 2)", "string (actionable advice 3)"]
+}`;
+
+  const userPrompt = `Financial Metrics:
+- Total Revenue Collected: ${totalRev}
+- Outstanding Unpaid: ${outstanding}
+- Overdue Invoices Count: ${overdueCount}
+- Active Projects: ${activeProjects}
+- Top Clients Count: ${analytics.topClients.length}`;
+
+  let executiveSummary = `Your business has collected ${totalRev.toLocaleString()} in revenue with ${outstanding.toLocaleString()} outstanding across ${overdueCount} overdue invoice(s). Overall financial trajectory is steady with ${activeProjects} active project(s).`;
+  let clientConcentrationRisk =
+    analytics.topClients.length <= 1
+      ? "High concentration risk: Revenue is heavily dependent on a single client account."
+      : "Healthy client distribution across multiple active accounts.";
+  let recommendations = [
+    overdueCount > 0
+      ? `Send automated payment reminders to recover ${overdueCount} overdue invoice(s).`
+      : "Maintain current billing schedule and prompt client follow-ups.",
+    "Offer 2% early payment discounts to accelerate cash collection.",
+    `Focus on scaling active project deliverables to achieve the projected revenue of ${projectedRev.toLocaleString()}.`,
+  ];
+
+  if (openrouterKey || groqKey) {
+    try {
+      let content = "";
+      if (openrouterKey) {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${openrouterKey}`,
+            "HTTP-Referer": "https://madbillio.com",
+            "X-Title": "Madbillio Billing",
+          },
+          body: JSON.stringify({
+            model: process.env.OPENROUTER_MODEL || "nvidia/nemotron-3-ultra-550b-a55b:free",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            temperature: 0.3,
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          content = data.choices?.[0]?.message?.content || "";
+        }
+      }
+
+      if (!content && groqKey) {
+        const groq = new Groq({ apiKey: groqKey });
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.3,
+          response_format: { type: "json_object" },
+        });
+        content = chatCompletion.choices[0]?.message?.content || "";
+      }
+
+      if (content) {
+        const parsed = JSON.parse(content);
+        if (parsed.executiveSummary) executiveSummary = parsed.executiveSummary;
+        if (parsed.clientConcentrationRisk) clientConcentrationRisk = parsed.clientConcentrationRisk;
+        if (parsed.recommendations && Array.isArray(parsed.recommendations)) recommendations = parsed.recommendations;
+      }
+    } catch (err) {
+      console.warn("AI Analytics insights error, using fallback:", err);
+    }
+  }
+
+  const dsoRating = dsoDays <= 15 ? "EXCELLENT" : dsoDays <= 35 ? "GOOD" : "ATTENTION_NEEDED";
+
+  return {
+    executiveSummary,
+    projectedNextMonthRevenue: projectedRev,
+    dsoDays,
+    dsoRating,
+    clientConcentrationRisk,
+    recommendations,
+  };
+}
+
 

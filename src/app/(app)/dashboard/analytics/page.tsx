@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/format";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { RevenueChart } from "@/components/analytics/revenue-chart";
 import { TopClientsChart } from "@/components/analytics/top-clients-chart";
+import { AIAnalyticsCard } from "@/components/analytics/ai-analytics-card";
 import { InvoiceStatusBadge } from "@/components/invoices/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Clock, Receipt, Users } from "lucide-react";
@@ -42,6 +43,9 @@ export default async function AnalyticsPage() {
           Revenue trends, top clients, and invoice performance.
         </p>
       </div>
+
+      {/* Embedded Live AI Financial Insights & Forecasting Banner */}
+      <AIAnalyticsCard currency={currency} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

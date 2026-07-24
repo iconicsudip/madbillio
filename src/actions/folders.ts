@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma, safePrismaQuery } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { uploadToS3 } from "@/lib/s3";
+import { uploadToS3, getPresignedS3Url } from "@/lib/s3";
 
 export type FolderItemInput = {
   name: string;
@@ -283,4 +283,9 @@ export async function syncProjectDocumentToFolder(input: {
 
     revalidatePath("/dashboard/folders");
   });
+}
+
+export async function getPresignedUrlAction(fileUrl: string) {
+  if (!fileUrl) return "";
+  return getPresignedS3Url(fileUrl);
 }
