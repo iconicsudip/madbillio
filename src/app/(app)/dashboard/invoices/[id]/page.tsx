@@ -7,6 +7,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { InvoiceStatusBadge } from "@/components/invoices/status-badge";
 import { InvoicePreview } from "@/components/invoices/invoice-preview";
 import { InvoiceActions } from "@/components/invoices/invoice-actions";
+import { GrokReminderModal } from "@/components/invoices/grok-reminder-modal";
 import { RecordPaymentDialog } from "@/components/payments/record-payment-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -40,7 +41,16 @@ export default async function InvoiceDetailPage({
         >
           <ArrowLeft className="size-4" /> Back to Invoices
         </Link>
-        <InvoiceActions id={invoice.id} status={invoice.status} />
+        <div className="flex items-center gap-2">
+          <GrokReminderModal
+            invoiceNumber={invoice.invoiceNumber}
+            clientName={invoice.client.name}
+            amountDue={formatCurrency(invoice.amountDue, invoice.currency)}
+            dueDate={formatDate(invoice.dueDate)}
+            clientEmail={invoice.client.email}
+          />
+          <InvoiceActions id={invoice.id} status={invoice.status} />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 print:hidden">

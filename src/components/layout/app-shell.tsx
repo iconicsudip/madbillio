@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/sonner";
+import { AIChatWidget } from "@/components/ai/ai-chat-widget";
 import { cn } from "@/lib/utils";
 
 const COOKIE_KEY = "sidebar-collapsed";
@@ -33,12 +34,13 @@ export function AppShell({
       <div
         className={cn(
           "flex min-h-screen flex-col transition-[padding-left] duration-200 ease-in-out",
-          collapsed ? "md:pl-[68px]" : "md:pl-56"
+          collapsed ? "md:pl-[68px]" : "md:pl-60"
         )}
       >
         <Topbar user={user} />
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
+      <AIChatWidget />
       <Toaster />
     </div>
   );

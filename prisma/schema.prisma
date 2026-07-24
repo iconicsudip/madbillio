@@ -16,13 +16,17 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  businessProfile BusinessProfile?
-  clients         Client[]
-  projects        Project[]
-  invoices        Invoice[]
-  payments        Payment[]
-  expenses        Expense[]
-  paymentDetails  PaymentDetail[]
+  businessProfile  BusinessProfile?
+  clients          Client[]
+  projects         Project[]
+  invoices         Invoice[]
+  payments         Payment[]
+  expenses         Expense[]
+  paymentDetails   PaymentDetail[]
+  fileStorageItems FileStorageItem[]
+  employees        Employee[]
+  employeePayouts  EmployeePayout[]
+  aiUsages         AiUsage[]
 }
 
 model BusinessProfile {
@@ -87,11 +91,28 @@ model Project {
   startDate   DateTime      @default(now())
   endDate     DateTime?
 
-  invoices Invoice[]
-  expenses Expense[]
+  invoices        Invoice[]
+  expenses        Expense[]
+  documents       ProjectDocument[]
+  assignments     ProjectAssignment[]
+  employeePayouts EmployeePayout[]
+  fileStorageItems FileStorageItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProjectDocument {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name     String
+  url      String
+  fileType String? @default("DOCUMENT")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 enum InvoiceStatus {
@@ -213,4 +234,97 @@ model Expense {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+model FileStorageItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  name       String
+  isFolder   Boolean  @default(false)
+  folderPath String   @default("/")
+  url        String?
+  fileType   String?  @default("FILE")
+  sizeBytes  Int?     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([userId, folderPath])
+}
+
+enum PayoutType {
+  FIXED_AMOUNT
+  PERCENTAGE
+  HOURLY
+  MONTHLY_SALARY
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  email         String
+  phone         String     @default("")
+  role          String     @default("Team Member")
+  status        String     @default("ACTIVE")
+  baseSalary    Float      @default(0)
+  defaultPayout PayoutType @default(FIXED_AMOUNT)
+
+  assignments ProjectAssignment[]
+  payouts     EmployeePayout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model ProjectAssignment {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  payoutType  PayoutType @default(FIXED_AMOUNT)
+  rateOrValue Float      @default(0)
+  hoursWorked Float      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model EmployeePayout {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id])
+
+  amount    Float
+  reason    String   @default("")
+  date      DateTime @default(now())
+  status    String   @default("PAID")
+
+  createdAt DateTime @default(now())
+}
+
+model AiUsage {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            String   // YYYY-MM-DD
+  creditsUsed     Int      @default(0)
+  maxDailyCredits Int      @default(20)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([userId, date])
 }

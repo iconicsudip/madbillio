@@ -9,7 +9,7 @@ import { formatDateInput, CURRENCIES } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/select";
 import { InvoicePreview } from "@/components/invoices/invoice-preview";
 import { ClientQuickAdd } from "@/components/invoices/client-quick-add";
+import { GrokInvoiceModal } from "@/components/invoices/grok-invoice-modal";
+import type { GrokInvoiceDraft } from "@/lib/grok";
 
 type ClientOption = {
   id: string;
@@ -148,6 +150,34 @@ export function InvoiceForm({
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function handleGrokDraft(draft: GrokInvoiceDraft) {
+    if (draft.clientName) {
+      const match = clientList.find(
+        (c) =>
+          c.name.toLowerCase().includes(draft.clientName!.toLowerCase()) ||
+          (draft.clientEmail && c.email.toLowerCase() === draft.clientEmail.toLowerCase())
+      );
+      if (match) {
+        setClientId(match.id);
+      }
+    }
+    if (draft.currency) setCurrency(draft.currency);
+    if (draft.taxRate !== undefined) setTaxRate(draft.taxRate);
+    if (draft.notes) setNotes(draft.notes);
+
+    if (draft.items && draft.items.length > 0) {
+      const newItems = draft.items.map((item, idx) => ({
+        id: `grok-${idx}-${Date.now()}`,
+        name: item.name,
+        quantity: item.quantity || 1,
+        unit: item.unit || "unit",
+        cost: item.cost || 0,
+        amount: (item.quantity || 1) * (item.cost || 0),
+      }));
+      setItems(newItems);
+    }
+  }
+
   function buildInput() {
     return {
       clientId,
@@ -171,12 +201,12 @@ export function InvoiceForm({
 
   function handleSave(status: "DRAFT" | "SENT") {
     if (!clientId) {
-      toast.error("Select a client to bill");
+      toast.error("Please select a client to bill.");
       return;
     }
     const input = buildInput();
     if (input.items.length === 0) {
-      toast.error("Add at least one line item");
+      toast.error("Please add at least one line item.");
       return;
     }
 
@@ -240,7 +270,8 @@ export function InvoiceForm({
             Generate and manage customer invoices quickly and accurately.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <GrokInvoiceModal onDraftGenerated={handleGrokDraft} />
           <Button
             variant="outline"
             disabled={pending}
@@ -262,7 +293,9 @@ export function InvoiceForm({
           <CardContent className="space-y-5">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Billed To</Label>
+                <Label>
+                  Billed To <span className="text-destructive">*</span>
+                </Label>
                 <ClientQuickAdd
                   onCreated={(client) => {
                     setClientList((prev) => [...prev, client]);
@@ -325,18 +358,24 @@ export function InvoiceForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Issued Date</Label>
+                <Label>
+                  Issued Date <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   type="date"
                   value={issuedDate}
+                  required
                   onChange={(e) => setIssuedDate(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Due Date</Label>
+                <Label>
+                  Due Date <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   type="date"
                   value={dueDate}
+                  required
                   onChange={(e) => setDueDate(e.target.value)}
                 />
               </div>
@@ -377,13 +416,17 @@ export function InvoiceForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Items</Label>
+              <Label>
+                Items <span className="text-destructive">*</span>
+              </Label>
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full text-sm">
                   <thead className="bg-secondary/60 text-xs text-muted-foreground">
                     <tr>
                       <th className="w-6" />
-                      <th className="px-3 py-2 text-left font-medium">Item</th>
+                      <th className="px-3 py-2 text-left font-medium">
+                        Item <span className="text-destructive">*</span>
+                      </th>
                       <th className="px-3 py-2 text-left font-medium">Qty</th>
                       <th className="px-3 py-2 text-left font-medium">Cost</th>
                       <th className="px-3 py-2 text-right font-medium">
@@ -475,10 +518,10 @@ export function InvoiceForm({
 
             <div className="space-y-2">
               <Label>Notes / Terms</Label>
-              <Textarea
-                rows={3}
+              <RichTextEditor
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={setNotes}
+                placeholder="Add payment terms, bank details, or notes..."
               />
             </div>
           </CardContent>

@@ -69,11 +69,15 @@ export function ClientQuickAdd({
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">
+              Name <span className="text-destructive">*</span>
+            </Label>
             <Input id="name" name="name" placeholder="Sid Vicious" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">
+              Email <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               name="email"

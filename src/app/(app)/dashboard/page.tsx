@@ -5,6 +5,7 @@ import { getDashboardStats } from "@/lib/stats";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { InvoiceStatusBadge } from "@/components/invoices/status-badge";
+import { AIGeneratorWizardModal } from "@/components/ai/ai-generator-wizard-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,7 +41,8 @@ export default async function DashboardPage() {
             Here&apos;s what&apos;s happening across your business.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <AIGeneratorWizardModal />
           <Button render={<Link href="/dashboard/projects" />} variant="outline">
             <Briefcase /> New Project
           </Button>

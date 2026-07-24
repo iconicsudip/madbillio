@@ -14,9 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Billio — Invoices, Payments & Profit Tracking",
+  title: "Madbillio — Invoices, Payments & Profit Tracking",
   description:
-    "Generate invoices, track project payments, and monitor profit & loss in one place.",
+    "Generate invoices with AI, manage project documents, track payments, and monitor profit & loss in one place.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

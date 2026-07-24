@@ -57,13 +57,13 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
       className="rounded-2xl border bg-card p-6 text-card-foreground sm:p-8"
     >
       <div className="flex items-center gap-2">
-        <span className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-primary text-primary-foreground">
+        <span className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground">
           {data.business.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={data.business.logoUrl}
               alt={data.business.name}
-              className="size-full object-cover"
+              className="size-full object-cover rounded-full"
             />
           ) : (
             <Zap className="size-4.5" fill="currentColor" />
@@ -177,7 +177,14 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Notes
           </p>
-          <p className="mt-1.5 text-muted-foreground">{data.notes}</p>
+          {/<[a-z][\s\S]*>/i.test(data.notes) ? (
+            <div
+              className="mt-1.5 text-muted-foreground prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary [&_blockquote]:border-l-2 [&_blockquote]:border-primary/40 [&_blockquote]:pl-3 [&_blockquote]:italic"
+              dangerouslySetInnerHTML={{ __html: data.notes }}
+            />
+          ) : (
+            <p className="mt-1.5 whitespace-pre-line text-muted-foreground">{data.notes}</p>
+          )}
         </div>
       )}
 

@@ -7,7 +7,7 @@ import { updateBusinessProfile } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -37,6 +37,7 @@ type Profile = {
 export function BusinessProfileForm({ profile }: { profile: Profile }) {
   const [pending, startTransition] = useTransition();
   const [logoUrl, setLogoUrl] = useState<string | null>(profile.logoUrl);
+  const [invoiceNotes, setInvoiceNotes] = useState<string>(profile.invoiceNotes);
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -62,7 +63,7 @@ export function BusinessProfileForm({ profile }: { profile: Profile }) {
       wiseEmail: String(formData.get("wiseEmail") ?? ""),
       defaultCurrency: String(formData.get("defaultCurrency") ?? "INR"),
       defaultTaxRate: Number(formData.get("defaultTaxRate") ?? 0),
-      invoiceNotes: String(formData.get("invoiceNotes") ?? ""),
+      invoiceNotes: invoiceNotes,
     };
     startTransition(async () => {
       try {
@@ -84,13 +85,13 @@ export function BusinessProfileForm({ profile }: { profile: Profile }) {
           <div className="space-y-2">
             <Label>Logo</Label>
             <div className="flex items-center gap-3">
-              <span className="flex size-14 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground">
+              <span className="flex size-14 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground">
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={logoUrl}
                     alt="Business logo"
-                    className="size-full object-cover"
+                    className="size-full object-cover rounded-full"
                   />
                 ) : (
                   <Zap className="size-6" fill="currentColor" />
@@ -120,11 +121,14 @@ export function BusinessProfileForm({ profile }: { profile: Profile }) {
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="businessName">Business Name</Label>
+            <Label htmlFor="businessName">
+              Business Name <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="businessName"
               name="businessName"
               defaultValue={profile.businessName}
+              required
             />
           </div>
           <div className="space-y-2">
@@ -217,12 +221,12 @@ export function BusinessProfileForm({ profile }: { profile: Profile }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="invoiceNotes">Default Notes / Terms</Label>
-            <Textarea
-              id="invoiceNotes"
-              name="invoiceNotes"
-              rows={3}
-              defaultValue={profile.invoiceNotes}
+            <RichTextEditor
+              value={invoiceNotes}
+              onChange={setInvoiceNotes}
+              placeholder="Default notes or terms for new invoices..."
             />
+            <input type="hidden" name="invoiceNotes" value={invoiceNotes} />
           </div>
         </CardContent>
       </Card>

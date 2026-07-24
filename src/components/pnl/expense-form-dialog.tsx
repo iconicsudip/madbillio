@@ -107,7 +107,9 @@ export function ExpenseFormDialog({
         <form action={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>
+                Category <span className="text-destructive">*</span>
+              </Label>
               <Select name="category" defaultValue={expense?.category ?? CATEGORIES[0]}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -122,7 +124,9 @@ export function ExpenseFormDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">
+                Amount <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="amount"
                 name="amount"
@@ -136,7 +140,9 @@ export function ExpenseFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">
+                Date <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="date"
                 name="date"

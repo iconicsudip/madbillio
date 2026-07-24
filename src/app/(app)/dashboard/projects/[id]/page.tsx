@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, FileText, ExternalLink, Download } from "lucide-react";
 import { getProject } from "@/actions/projects";
 import { listClients } from "@/actions/clients";
 import { requireUserId, getBusinessProfile } from "@/lib/session";
@@ -9,6 +9,7 @@ import { InvoiceStatusBadge } from "@/components/invoices/status-badge";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 import { ExpenseFormDialog } from "@/components/pnl/expense-form-dialog";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { DocumentViewerModal } from "@/components/projects/document-viewer-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -85,6 +86,7 @@ export default async function ProjectDetailPage({
               budget: project.budget,
               startDate: project.startDate,
               endDate: project.endDate,
+              documents: project.documents,
             }}
             trigger={<Button variant="outline">Edit Project</Button>}
           />
@@ -137,6 +139,100 @@ export default async function ProjectDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Project Documents Section */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Project Documents</CardTitle>
+          </div>
+          <ProjectFormDialog
+            key={`docs-${project.updatedAt.toISOString()}`}
+            clients={clients}
+            project={{
+              id: project.id,
+              name: project.name,
+              description: project.description,
+              clientId: project.clientId,
+              status: project.status,
+              budget: project.budget,
+              startDate: project.startDate,
+              endDate: project.endDate,
+              documents: project.documents,
+            }}
+            trigger={
+              <Button size="sm" variant="outline" className="gap-1 text-xs">
+                <Plus className="h-3.5 w-3.5" /> Manage Documents
+              </Button>
+            }
+          />
+        </CardHeader>
+        <CardContent className="p-0">
+          {!project.documents || project.documents.length === 0 ? (
+            <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+              No documents attached to this project. Click &quot;Manage Documents&quot; to upload contracts or links.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Document Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {project.documents.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary shrink-0" />
+                        <span className="truncate max-w-xs">{doc.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                        {doc.fileType || "Document"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {formatDate(doc.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <DocumentViewerModal
+                          documentName={doc.name}
+                          documentUrl={doc.url}
+                        />
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={doc.url.startsWith("data:") ? doc.name : undefined}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            title="Open Link / Download"
+                          >
+                            {doc.url.startsWith("data:") ? (
+                              <Download className="h-4 w-4" />
+                            ) : (
+                              <ExternalLink className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </a>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
