@@ -575,7 +575,6 @@ export function FolderManagerClient({
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent text-xs">
-                    <TableHead className="w-10 text-center">#</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Date Modified</TableHead>
                     <TableHead>Size</TableHead>
@@ -596,14 +595,6 @@ export function FolderManagerClient({
                           isSelected ? "bg-muted/70 font-medium" : "hover:bg-muted/40"
                         }`}
                       >
-                        <TableCell className="text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => setSelectedItemId(item.id)}
-                            className="size-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                          />
-                        </TableCell>
 
                         {/* Icon & Item Name */}
                         <TableCell>
