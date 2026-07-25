@@ -11,19 +11,39 @@ export function AIAnalyticsCard({ currency }: { currency: string }) {
   const [insights, setInsights] = useState<AIAnalyticsInsightsPayload | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function loadInsights() {
+  function loadInsights(forceRegenerate: boolean = false) {
     startTransition(async () => {
       try {
-        const res = await getAiAnalyticsInsights();
+        const res = await getAiAnalyticsInsights(forceRegenerate);
         setInsights(res);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("madko_ai_analytics_insights", JSON.stringify(res));
+        }
+        if (forceRegenerate) {
+          toast.success("AI Analytics Insights refreshed!");
+        }
       } catch (err: any) {
         console.error("AI Analytics Insights error:", err);
+        toast.error("Failed to refresh AI Insights.");
       }
     });
   }
 
   useEffect(() => {
-    loadInsights();
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("madko_ai_analytics_insights");
+      if (cached) {
+        try {
+          setInsights(JSON.parse(cached));
+          // Validate cache against database on load without forcing regeneration
+          loadInsights(false);
+        } catch {
+          loadInsights(true);
+        }
+      } else {
+        loadInsights(false);
+      }
+    }
   }, []);
 
   return (
@@ -50,7 +70,7 @@ export function AIAnalyticsCard({ currency }: { currency: string }) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={loadInsights}
+          onClick={() => loadInsights(true)}
           disabled={pending}
           className="h-8 text-xs gap-1.5 rounded-xl cursor-pointer"
         >

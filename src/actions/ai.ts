@@ -6,7 +6,7 @@ import { createProject } from "@/actions/projects";
 import { createInvoice } from "@/actions/invoices";
 import { uploadFileToFolder } from "@/actions/folders";
 import { uploadToS3 } from "@/lib/s3";
-import { safePrismaQuery } from "@/lib/prisma";
+import { prisma, safePrismaQuery } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { getDashboardStats, getAnalyticsData } from "@/lib/stats";
 import { Groq } from "groq-sdk";
@@ -876,8 +876,24 @@ export interface AIAnalyticsInsightsPayload {
   recommendations: string[];
 }
 
-export async function getAiAnalyticsInsights(): Promise<AIAnalyticsInsightsPayload> {
+export async function getAiAnalyticsInsights(
+  forceRegenerate: boolean = false
+): Promise<AIAnalyticsInsightsPayload> {
   const userId = await requireUserId();
+
+  // Try checking database cache first
+  const cacheItem = await prisma.fileStorageItem.findFirst({
+    where: { userId, name: "ai_insights.json", folderPath: "/System/Cache" },
+  });
+
+  if (cacheItem?.url && !forceRegenerate) {
+    try {
+      return JSON.parse(cacheItem.url) as AIAnalyticsInsightsPayload;
+    } catch {
+      // fallback to generation on corrupted cache
+    }
+  }
+
   const creditCheck = await checkAndDeductAiCredit(userId);
   if (!creditCheck.allowed) {
     throw new Error(creditCheck.message || "Daily AI credit limit reached.");
@@ -986,7 +1002,7 @@ Analyze the user's business metrics and return ONLY a valid JSON object matching
 
   const dsoRating = dsoDays <= 15 ? "EXCELLENT" : dsoDays <= 35 ? "GOOD" : "ATTENTION_NEEDED";
 
-  return {
+  const payload: AIAnalyticsInsightsPayload = {
     executiveSummary,
     projectedNextMonthRevenue: projectedRev,
     dsoDays,
@@ -994,6 +1010,32 @@ Analyze the user's business metrics and return ONLY a valid JSON object matching
     clientConcentrationRisk,
     recommendations,
   };
+
+  // Save to database cache
+  try {
+    if (cacheItem) {
+      await prisma.fileStorageItem.update({
+        where: { id: cacheItem.id },
+        data: { url: JSON.stringify(payload) },
+      });
+    } else {
+      await prisma.fileStorageItem.create({
+        data: {
+          userId,
+          name: "ai_insights.json",
+          folderPath: "/System/Cache",
+          url: JSON.stringify(payload),
+          isFolder: false,
+          fileType: "JSON",
+          sizeBytes: JSON.stringify(payload).length,
+        },
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to write to S3 database cache:", err);
+  }
+
+  return payload;
 }
 
 

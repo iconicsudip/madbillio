@@ -140,6 +140,19 @@ export async function updateProject(id: string, input: ProjectInput) {
       : []),
   ]);
 
+  if (docsToCreate.length > 0) {
+    const { syncProjectDocumentToFolder } = await import("./folders");
+    for (const doc of docsToCreate) {
+      await syncProjectDocumentToFolder({
+        projectId: id,
+        projectName: input.name.trim(),
+        docName: doc.name,
+        url: doc.url,
+        fileType: doc.fileType,
+      });
+    }
+  }
+
   revalidatePath("/dashboard/projects");
   revalidatePath(`/dashboard/projects/${id}`);
 }
