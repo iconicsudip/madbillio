@@ -153,6 +153,12 @@ export function DocumentViewerModal({
               title={documentName}
               className="w-full h-[65vh] rounded border-0"
             />
+          ) : (isSpreadsheet || isOfficeDoc) && activeUrl.startsWith("http") ? (
+            <iframe
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(activeUrl)}&embedded=true`}
+              title={documentName}
+              className="w-full h-[65vh] rounded border-0 bg-white"
+            />
           ) : (
             <div className="flex flex-col items-center justify-center text-center p-8 space-y-4 max-w-md">
               <span className="flex size-20 items-center justify-center rounded-3xl bg-amber-500/15 text-amber-500 shadow-inner">
